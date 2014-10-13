@@ -23,13 +23,13 @@ APP="null"
 while getopts ":cj" OPT ; do
 	case $OPT in
 		c)
-			APP=Confluence
+			APP=confluence
 			BIN_DIR=/usr/local/atlassian/confluence/bin
 			INSTALL_DIR_ARCH=confluence_installdir_`date "+%Y%m%d"`_$$.tar.gz
 			HOME_DIR_ARCH=confluence_homedir_`date "+%Y%m%d"`_$$.tar.gz
 			;;
 		j)
-			APP=JIRA
+			APP=jira
 			BIN_DIR=/usr/local/atlassian/jira/bin
 			INSTALL_DIR_ARCH=jira_installdir_`date "+%Y%m%d"`_$$.tar.gz
                         HOME_DIR_ARCH=jira_homedir_`date "+%Y%m%d"`_$$.tar.gz
