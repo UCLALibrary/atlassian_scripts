@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# This script is meant to be run as a root cronjob to backup a Confluence or JIRA server
+# It utilizes two scripts: 
+# - atlassian_fs_backup - create filesystem backup
+# - atlassian_db_backup - crate database backup
+#
+# After the backup completes successfully, we check to see that only seven days worth of
+# backup directories. Anything older than seven days is removed.
+
+# Must be root to run this script
+if [ "`/usr/bin/id -urn`" != "root" ] ; then
+        echo -e "\nYou must be root to execute this script \n"
+        exit 1
+fi
+
+USAGE() {
+        echo -e "\nUsage: `basename $0` [ -c | -j ] "
+        echo -e "-c --> Backup Confluence"
+        echo -e "-j --> Backup JIRA"
+}
+
+BACKUP_DIR=/atlassianbackup
+SCRIPT_DIR=/usr/local/bin
+FS_BACKUP=$SCRIPT_DIR/atlassian_fs_backup
+DB_BACKUP=$SCRIPT_DIR/atlassian_db_backup
+TODAY=`date "+%Y%m%d"`
+SEVENDAYSAGO=`date -d 'now - 7 days' "+%Y%m%d"`
+APP="null"
+
+while getopts ":cj" OPT ; do
+        case $OPT in
+                c)
+                        APP=confluence
+			FS_OPTIONS="-c"
+			DB_OPTIONS="-c -s"
+                        ;;
+                j)
+                        APP=jira
+			FS_OPTIONS="-j"
+			DB_OPTIONS="-j -s"
+                        ;;
+                \?)
+                        echo -e "\nInvalid option: -$OPTARG" >&2
+                        USAGE
+                        exit 1
+                        ;;
+                :)
+                        echo -e "\nOption -$OPTARG requires an argument" >&2
+                        USAGE
+                        exit 1
+                        ;;
+        esac
+done
+
+if [ "$APP" == "null" ] ; then
+        USAGE
+        exit 1
+fi
+
+# -------------------------------------------------------------
+# Execute Full Backup
+# -------------------------------------------------------------
+
+mkdir -p $BACKUP_DIR/$TODAY
+
+echo -e "\nPerforming $APP filesystem backup..."
+$FS_BACKUP $FS_OPTIONS
+if [ $? -ne 0 ] ; then
+	echo -e "Error performing $APP filesystem backup! Exiting from backup process.\n"
+	exit 1
+fi
+
+echo -e "\nPerforming $APP database backup..."
+$DB_BACKUP $DB_OPTIONS
+if [ $? -ne 0 ] ; then
+	echo -e "Error performing $APP database backup! Exiting from backup process.\n"
+	exit 1
+fi
+
+mv $BACKUP_DIR/${APP}_*_$TODAY_* $BACKUP_DIR/$TODAY
+
+# -------------------------------------------------------------
+# Rotate Backup Files - Only Keep Seven Days
+# -------------------------------------------------------------
+
+BACKUP_DATES=`find $BACKUP_DIR -type d -name "[0-9]*" -printf "%f\n" | sort -n`
+
+# Each backup directory is named in YYYYMMDD format based on the day it was created.
+# If a directory's name is older than seven days ago, the directory is removed.
+if [ -n "$BACKUP_DATES" ] ; then
+	for DATE in $BACKUP_DATES ; do
+		if [ $(( $DATE - $SEVENDAYSAGO )) -lt 0 ] ; then
+			rm -rf $BACKUP_DIR/$DATE
+		fi
+	done
+fi

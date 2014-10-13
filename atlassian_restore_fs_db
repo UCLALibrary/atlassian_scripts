@@ -1,0 +1,153 @@
+#!/bin/bash
+
+# This script automates the procedure for restoring Confluence or JIRA filesystem and database backups
+
+# Common directories between Confluence and JIRA
+HOME_DIR=/var/atlassian/application-data
+INSTALL_DIR=/usr/local/atlassian
+
+APP="null"
+SQLDUMP_FILE="null"
+INSTALLDIR_TAR="null"
+HOMEDIR_TAR="null"
+
+# Must be root to run this script
+if [ "`/usr/bin/id -urn`" != "root" ] ; then
+	echo -e "\nYou must be root to execute this script \n"
+	exit 1
+fi
+
+USAGE() {
+	echo -e "\nUsage: `basename $0` [ -c | -j ] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
+	echo -e "-c			  --> Restore a Confluence server"
+        echo -e "-j			  --> Restore a JIRA server"
+	echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the SQL DUMP file"
+	echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Installation directory archive"
+	echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Home directory archive \n"
+}
+
+while getopts ":cjs:i:h:" OPT ; do
+	case $OPT in
+		c)
+			APP=confluence
+			BIN_DIR=$INSTALL_DIR/confluence/bin
+			DBXML_CFG=$HOME_DIR/confluence/confluence.cfg.xml
+			PORT=8090
+			;;
+		j)
+			APP=jira
+			BIN_DIR=$INSTALL_DIR/jira/bin
+			DBXML_CFG=$HOME_DIR/jira/dbconfig.xml
+			PORT=8080
+			;;
+		s)
+			SQLDUMP_FILE=$OPTARG
+			;;
+		i)
+			INSTALLDIR_TAR=$OPTARG
+			;;
+		h)
+			HOMEDIR_TAR=$OPTARG
+			;;
+		\?)
+                        echo -e "\nInvalid option: -$OPTARG" >&2
+                        USAGE
+                        exit 1
+                        ;;
+                :)
+                        echo -e "\nOption -$OPTARG requires an argument" >&2
+                        USAGE
+                        exit 1
+                        ;;
+        esac
+done
+
+for VAR in $APP $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
+        if [ "$VAR" = "null" ] ; then
+                USAGE
+                exit 1
+        fi
+done
+
+# Perform checks to determine if this script can run on this server
+# -------------------------------------------------------------------
+
+# A user.sh script should be accessible - this is indicates if $APP is installed
+if [ -s $BIN_DIR/user.sh ] ; then
+	# By sourcing user.sh we import the dedicated $APP user account - should be either confluence or jira
+	. $BIN_DIR/user.sh 
+
+	# Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
+	if [ -z "$CONF_USER" -a -z "$JIRA_USER" ] ; then
+                echo -e "\nA dedicated confluence user account was not found on this system \n"
+		echo -e "This indicates $APP exists on this system but is not installed properly\n"
+                exit 1
+        fi
+
+	# $APP must not be running
+	if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
+		echo -e "\n$APP is running"
+		echo -e "Stop $APP first before running this script \n"
+		exit 1
+	fi
+else
+	echo -e "\n$APP does not appear to be installed on this system \n"
+        echo -e "Ensure a base install of $APP is available before running this script \n"
+        exit 1
+fi
+
+# Verify the file paths given exist and each file contains data
+for FILE in $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
+	if [ ! -s $FILE ] ; then
+		echo -e "\nCould not find file $FILE or $FILE is empty\n"
+		exit 1
+	fi
+done
+
+# -------------------------------------------------------------------
+# Checks Complete
+
+# Begin the restoration procedures
+# -------------------------------------------------------------------
+
+# If necessary remove the existing $APP installation and home directories
+# This ensures a clean environment for the extraction of the tar files
+[ -d $INSTALL_DIR/$APP ] && rm -rf $INSTALL_DIR/$APP
+[ -d $HOME_DIR/$APP ] && rm -rf $HOME_DIR/$APP
+
+# Untar the archive files of the Install and Home directories
+echo -e "\nUnpacking the $APP Installation directory \n"
+tar xzf $INSTALLDIR_TAR -C $INSTALL_DIR
+echo -e "Unpacking the $APP Home directory \n"
+tar xzf $HOMEDIR_TAR -C $HOME_DIR
+
+# Get the database name from $APP's $DBXML_CFG file
+# Get the mysql server hostname, username, and password from the .my.cnf file
+## NOTE: Due to a bug with the mysql and mysqldump commands, it is problematic to 
+## to specify the database name in the .my.cnf file - they share the option
+## --database which means something different to each command.
+## This is why we get the databse name from the $DBXML_CFG file.
+if [ "$APP" = "confluence" ] ; then
+	DBNAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`	
+else
+	DBNAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
+fi
+
+# Before restoring the database, we will drop all existing tables to ensure a clean start
+echo -e "\nDropping all tables from $DBNAME - if this is correct press Enter - otherwise CTRL-C"
+read
+/usr/local/bin/atlassian_drop_db_tables $DBNAME
+
+# Restore the MySQL dump file to the $APP database
+echo -e "\nRestoring $SQLDUMP_FILE to the $APP database"
+echo -e "This can be a lengthy process - please be patient \n"
+mysql $DBNAME < $SQLDUMP_FILE
+if [ $? -ne 0 ] ; then
+	echo -e "\nThere was a problem restoring the MySQL backup\n"
+	exit 1
+fi
+
+echo -e "\nRestoration of the $APP server is complete."
+
+echo -e "\nThe archive files you specified on the cmd line are still on this server taking up space"
+echo -e "If you no longer need them you should delete them \n"

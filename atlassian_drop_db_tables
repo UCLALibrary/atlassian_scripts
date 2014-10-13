@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# This script drops all tables from the specified database
+# This is done to clear out the database without having to drop it entirely
+# This is an important step in the Atlassian DB restoration process
+
+# Must be root to run this script
+if [ "`/usr/bin/id -urn`" != "root" ] ; then
+        echo -e "\nYou must be root to execute this script \n"
+        exit 1
+fi
+
+# Name of the database is a required paramater
+DBNAME=$1
+
+if [ "$DBNAME" == "" ] ; then
+	echo -e "Usage: `basename $0` [DBNAME]"
+	exit 1
+fi
+
+TABLES=$(mysql $DBNAME -e "SHOW TABLES" | awk '{ print $1 }' | grep -v "^Tables_in_$DBNAME")
+
+if [ "$TABLES" == "" ] ; then
+	echo -e "There was a problem accessing the $DBNAME database or no tables were found"
+	exit 1
+fi
+
+# Create a comma separated list of tables to use in the DROP TABLE statement
+TABLELIST=$(echo $TABLES | sed 's/ /, /g')
+
+# Before we drop the tables we remove the foreign key constraint checks and re-enable when finished
+# The removal of this check only affects this active session - it does affect other databases
+mysql $DBNAME -e "SET foreign_key_checks = 0 ; DROP TABLE $TABLELIST ; SET foreign_key_checks = 1"
+
