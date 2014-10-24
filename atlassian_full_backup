@@ -21,7 +21,7 @@ USAGE() {
 }
 
 BACKUP_DIR=/atlassianbackup
-SCRIPT_DIR=/usr/local/bin
+SCRIPT_DIR=/usr/local/bin/atlassian
 FS_BACKUP=$SCRIPT_DIR/atlassian_fs_backup
 DB_BACKUP=$SCRIPT_DIR/atlassian_db_backup
 TODAY=`date "+%Y%m%d"`
