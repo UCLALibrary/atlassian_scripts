@@ -1,6 +1,6 @@
 ## README - Atlassian Scripts ##
 
-Did it work?
+Did it work? How about now?
 
 These scripts can be used on the Library's Confluence and JIRA servers for the purpose of managing back-ups, restores and creating new test/production environments
 
