@@ -173,7 +173,7 @@ fi
 # Before restoring the database, we will drop all existing tables to ensure a clean start
 echo -e "\nDropping all tables from $DBNAME - if this is correct press Enter - otherwise CTRL-C"
 read
-/usr/local/bin/atlassian_drop_db_tables $DBNAME
+/usr/local/bin/atlassian/atlassian_drop_db_tables $DBNAME
 
 # Restore the MySQL dump file to the $APP Test database
 echo -e "\nRestoring $SQLDUMP_FILE to the $APP Test database"
