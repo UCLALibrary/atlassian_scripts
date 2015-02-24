@@ -187,6 +187,7 @@ if [ "$APP" = "confluence" ] ; then
 	echo -e "Some things you will need to do manually in the $APP GUI: \n"
 	echo -e "1. Disable the Mail Servers so $APP does not attempt to send out notificaitons \n"
 	echo -e "2. Modify the Application Link to point to the $APP_LINK Test server \n"
+  echo -e "3. Remove all External Gadget Specification URLs and add Gadget Feed URL to https://jira-test.library.ucla.edu \n"
 else
 	echo -e "\nThe $APP Test server is now ready."
 	echo -e "Disable Mail so $APP does not attempt to send out notificaitons"
