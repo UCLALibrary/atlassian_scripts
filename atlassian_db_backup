@@ -30,7 +30,7 @@ USAGE() {
 BACKUP_DIR=/atlassianbackup
 SILENT=0
 APP="null"
-DBNAME="null"
+DB_NAME="null"
 
 while getopts ":cjws" OPT ; do
 	case $OPT in
@@ -77,7 +77,7 @@ done
 if [ "$APP" = "null" ] ; then
 	USAGE
 	exit 1
-elif [ "$DBNAME" = "null" ] ; then
+elif [ "$DB_NAME" = "null" ] ; then
         echo -e "\n$DBXML_CFG does not exist - exiting \n"
         exit 1
 fi
