@@ -76,6 +76,11 @@ for VAR in $APP $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
         fi
 done
 
+if [ ! -f $DBXML_CFG ] ; then
+	echo -e "\n$DBXML_CFG does not exist - exiting \n"
+	exit 1
+fi
+
 # Perform checks to determine if this script can run on this server
 # -------------------------------------------------------------------
 
