@@ -21,9 +21,9 @@ fi
 
 USAGE() {
 	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] -d [DATABASE-HOSTNAME] -x [PATH-TO-CFGXML-FILE] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
-	echo -e "-c			   --> Create a Confluence test server"
-	echo -e "-j			   --> Create a JIRA test server"
-	echo -e "-w			   --> Create a Crowd test server"
+	echo -e "-c		          --> Create a Confluence test server"
+	echo -e "-j			  --> Create a JIRA test server"
+	echo -e "-w			  --> Create a Crowd test server"
 	echo -e "-d DATABASE-HOSTNAME      --> Hostname of MySQL Database server"
 	echo -e "-x PATH-TO-CFGXML-FILE    --> Location of xml file with connection information to the Confluence/JIRA/Crowd Test database"
 	echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the Production SQL DUMP file"
