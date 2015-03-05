@@ -1,6 +1,13 @@
 #!/bin/bash
 
-# Creates a MySQL DB backup of the Confluence or JIRA MySQL database
+# Creates a MySQL DB backup of the Confluence, JIRA, or Crowd MySQL database
+
+# Get the database name from $APP's $DBXML_CFG file
+# Get the mysql hostname, username, and password from the .my.cnf file
+## NOTE: Due to a bug with the mysql and mysqldump commands, it is problematic to
+## to specify the database name in the .my.cnf file - they share the option
+## --database which means something different to each command.
+## This is why we get the databse name from the $DBXML_CFG file.
 
 # Must be root to run this script
 if [ "`/usr/bin/id -urn`" != "root" ] ; then
@@ -8,13 +15,15 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
         exit 1
 fi
 
-# Common directory between Confluence and JIRA
-HOME_DIR=/var/atlassian/application-data
+# Common directory between Confluence, JIRA or Crowd
+INSTALL_DIR="/usr/local/atlassian"
+HOME_DIR="/var/atlassian/application-data"
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j ] [ -s ]"
+	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] [ -s ]"
 	echo -e "-c --> Backup Confluence MySQL DB"
 	echo -e "-j --> Backup JIRA MySQL DB"
+	echo -e "-w --> Backup Crowd MySQL DB"
 	echo -e "-s --> Indicate this script should run in silent mode\n"
 }
 
@@ -22,21 +31,31 @@ BACKUP_DIR=/atlassianbackup
 SILENT=0
 APP="null"
 
-while getopts ":cjs" OPT ; do
+while getopts ":cjws" OPT ; do
 	case $OPT in
 		c)
-			APP=confluence
-			BIN_DIR=/usr/local/atlassian/confluence/bin
-			DBXML_CFG=$HOME_DIR/confluence/confluence.cfg.xml
+			APP="confluence"
+			DBXML_CFG="$HOME_DIR/confluence/confluence.cfg.xml"
+			DB_NAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
+			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
 			BACKUP_FILE=confluence_sqldump_`date "+%Y%m%d"`_$$.sql
 			PORT=8090
 			;;
 		j)
-			APP=JIRA
-			BIN_DIR=/usr/local/atlassian/jira/bin
-			DBXML_CFG=$HOME_DIR/jira/dbconfig.xml
+			APP="jira"
+			DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
+			DB_NAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
+			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
 			BACKUP_FILE=jira_sqldump_`date "+%Y%m%d"`_$$.sql
 			PORT=8080
+			;;
+		w)
+			APP="crowd"
+			DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
+			DB_NAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
+			ENV_FILE="/etc/sysconfig/crowd"
+			BACKUP_FILE=crowd_sqldump_`date "+%Y%m%d"`_$$.sql
+			PORT=8095
 			;;
 		s)
 			SILENT=1
@@ -62,7 +81,7 @@ for VAR in $APP ; do
 done
 
 # Perform checks to determine if this script can run on this server
-if [ -s $BIN_DIR/user.sh ] ; then
+if [ -s $ENV_FILE ] ; then
 	# If script was invoked with the -s flag - skip check if $APP is running
 	if [ $SILENT -eq 0 ] ; then
 		# Test to see if $APP is running
@@ -75,11 +94,7 @@ if [ -s $BIN_DIR/user.sh ] ; then
 			case "$ANSWER" in
 				y|Y)
 					echo -e "\nStopping $APP now... \n"
-					if [ $APP == "confluence" ] ; then
-						/sbin/service confluence stop
-					elif [ $APP == "JIRA" ] ; then
-						/sbin/service jira stop
-					fi
+					/sbin/service $APP stop
 					;;
 				n|N)
 					echo -e "\nOK - moving on without stopping $APP \n"
@@ -94,18 +109,6 @@ if [ -s $BIN_DIR/user.sh ] ; then
 else
         echo -e "\nCould not locate a $APP installation on this system \n"
         exit 1
-fi
-
-# Get the database name from $APP's $DBXML_CFG file
-# Get the mysql hostname, username, and password from the .my.cnf file
-## NOTE: Due to a bug with the mysql and mysqldump commands, it is problematic to
-## to specify the database name in the .my.cnf file - they share the option
-## --database which means something different to each command.
-## This is why we get the databse name from the $DBXML_CFG file.
-if [ "$APP" = "confluence" ] ; then
-        DB_NAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
-else
-        DB_NAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
 fi
 
 # See https://docs.library.ucla.edu/x/GoA4Bw for details regarding the mysqldump options

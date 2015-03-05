@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# JIRA/Confluence does not have built in functionality to expire Tomcat logs:
+# JIRA/Confluence/Crowd do not have built in functionality to expire Tomcat logs:
 # access_log.DATE
 # catalina.DATE.log
 # host-manager.DATE.log
@@ -18,20 +18,29 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-        echo -e "\nUsage: `basename $0` [ -c | -j ] "
-        echo -e "-c --> Backup Confluence"
-        echo -e "-j --> Backup JIRA"
+        echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
+        echo -e "-c --> Rotate Confluence Tomcat logs"
+        echo -e "-j --> Rotate JIRA Tomcat logs"
+        echo -e "-w --> Rotate Crowd Tomcat logs"
 }
 
+INSTALL_DIR="/usr/local/atlassian"
+SAVETIME=180
 APP="null"
 
-while getopts ":cj" OPT ; do
+while getopts ":cjw" OPT ; do
         case $OPT in
                 c)
-                        APP=confluence
+                        APP="confluence"
+			TOMCAT_LOG_DIR="$INSTALL_DIR/confluence/logs"
                         ;;
                 j)
-                        APP=jira
+                        APP="jira"
+			TOMCAT_LOG_DIR="$INSTALL_DIR/jira/logs"
+                        ;;
+                w)
+                        APP="crowd"
+			TOMCAT_LOG_DIR="$INSTALL_DIR/crowd/apache-tomcat/logs"
                         ;;
                 \?)
                         echo -e "\nInvalid option: -$OPTARG" >&2
@@ -50,9 +59,6 @@ if [ "$APP" == "null" ] ; then
         USAGE
         exit 1
 fi
-
-TOMCAT_LOG_DIR=/usr/local/atlassian/$APP/logs
-SAVETIME=180
 
 if [ ! -r $TOMCAT_LOG_DIR ] ; then
 	echo -e "\nTomcat log directory $TOMCAT_LOG_DIR could not be accessed.\n"

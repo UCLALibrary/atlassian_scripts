@@ -9,30 +9,37 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j ] "
+	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
 	echo -e "-c --> Backup Confluence filesystem"
 	echo -e "-j --> Backup JIRA filesystem"
+	echo -e "-w --> Backup Crowd filesystem"
 }
 
-BACKUP_DIR=/atlassianbackup
-INSTALL_DIR=/usr/local/atlassian
-HOME_DIR=/var/atlassian/application-data
+BACKUP_DIR="/atlassianbackup"
+INSTALL_DIR="/usr/local/atlassian"
+HOME_DIR="/var/atlassian/application-data"
 BIN_DIR="null"
 APP="null"
 
-while getopts ":cj" OPT ; do
+while getopts ":cjw" OPT ; do
 	case $OPT in
 		c)
-			APP=confluence
-			BIN_DIR=/usr/local/atlassian/confluence/bin
+			APP="confluence"
+			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
 			INSTALL_DIR_ARCH=confluence_installdir_`date "+%Y%m%d"`_$$.tar.gz
 			HOME_DIR_ARCH=confluence_homedir_`date "+%Y%m%d"`_$$.tar.gz
 			;;
 		j)
-			APP=jira
-			BIN_DIR=/usr/local/atlassian/jira/bin
+			APP="jira"
+			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
 			INSTALL_DIR_ARCH=jira_installdir_`date "+%Y%m%d"`_$$.tar.gz
-                        HOME_DIR_ARCH=jira_homedir_`date "+%Y%m%d"`_$$.tar.gz
+			HOME_DIR_ARCH=jira_homedir_`date "+%Y%m%d"`_$$.tar.gz
+			;;
+		w)
+			APP="crowd"
+			ENV_FILE="/etc/sysconfig/crowd"
+			INSTALL_DIR_ARCH=crowd_installdir_`date "+%Y%m%d"`_$$.tar.gz
+			HOME_DIR_ARCH=crowd_homedir_`date "+%Y%m%d"`_$$.tar.gz
 			;;
 		\?)
 			echo -e "\nInvalid option: -$OPTARG" >&2
@@ -53,9 +60,9 @@ if [ "$APP" == "null" ] ; then
 fi
 
 # Perform check to determine if this script can run on this server
-if [ ! -s $BIN_DIR/user.sh ] ; then
-        echo -e "\nCould not locate a $APP installation on this system \n"
-        exit 1
+if [ ! -s $ENV_FILE ] ; then
+	echo -e "\nCould not locate a $APP installation on this system \n"
+	exit 1
 fi
 
 echo -e "Starting back-up of the $APP filesystem \n"
@@ -63,7 +70,7 @@ echo -e "Backing-up $APP Installation directory..."
 tar czf $BACKUP_DIR/$INSTALL_DIR_ARCH -C $INSTALL_DIR . > /dev/null 2>&1
 if [ $? -ne 0 -a $? -ne 1 ] ; then
 	echo -e "\nFailed to create the Installation directory archive - exiting \n"
-	if [ -f $BACKUP_DIR/$$INSTALL_DIR_ARCH ]; then
+	if [ -f $BACKUP_DIR/$INSTALL_DIR_ARCH ]; then
 		rm -f $BACKUP_DIR/$INSTALL_DIR_ARCH
 	fi
 	exit 1
@@ -72,7 +79,7 @@ echo -e "Backing-up $APP Home directory..."
 tar czf $BACKUP_DIR/$HOME_DIR_ARCH -C $HOME_DIR . > /dev/null 2>&1
 if [ $? -ne 0 -a $? -ne 1 ] ; then
 	echo -e "\nFailed to create the Home directory archive - exiting \n"
-	if [ -f $BACKUP_DIR/$$HOME_DIR_ARCH ]; then
+	if [ -f $BACKUP_DIR/$HOME_DIR_ARCH ]; then
 		rm -f $BACKUP_DIR/$HOME_DIR_ARCH
 	fi
 	exit 1

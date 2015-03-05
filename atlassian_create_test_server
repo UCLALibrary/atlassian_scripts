@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# This script automates the procedure for creating a Test server for Confluence or JIRA
+# This script automates the procedure for creating a Test server for Confluence, JIRA, or Crowd
 
-# Common directories between Confluence and JIRA
-HOME_DIR=/var/atlassian/application-data
-INSTALL_DIR=/usr/local/atlassian
+# Common directories between Confluence, JIRA, and Crowd
+HOME_DIR="/var/atlassian/application-data"
+INSTALL_DIR="/usr/local/atlassian"
 
 APP="null"
 DB_HOST="null"
@@ -20,64 +20,74 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j ] -d [DATABASE-HOSTNAME] -x [PATH-TO-CFGXML-FILE] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
-	echo -e "-c			  --> Create a Confluence test server"
-        echo -e "-j			  --> Create a JIRA test server"
+	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] -d [DATABASE-HOSTNAME] -x [PATH-TO-CFGXML-FILE] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
+	echo -e "-c			   --> Create a Confluence test server"
+	echo -e "-j			   --> Create a JIRA test server"
+	echo -e "-w			   --> Create a Crowd test server"
 	echo -e "-d DATABASE-HOSTNAME      --> Hostname of MySQL Database server"
-	echo -e "-x PATH-TO-CFGXML-FILE    --> Location of xml file with connection information to the Confluence/JIRA Test database"
+	echo -e "-x PATH-TO-CFGXML-FILE    --> Location of xml file with connection information to the Confluence/JIRA/Crowd Test database"
 	echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the Production SQL DUMP file"
 	echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Production Installation directory archive"
 	echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Production Home directory archive \n"
 }
 
-while getopts ":cjd:x:s:i:h:" OPT ; do
+while getopts ":cjwd:x:s:i:h:" OPT ; do
 	case $OPT in
 		c)
-			APP=confluence
-			APP_LINK=JIRA
-			BIN_DIR=$INSTALL_DIR/confluence/bin
-			CFG_DIR=$INSTALL_DIR/confluence/conf
-			DBXML_FILE=$HOME_DIR/confluence/confluence.cfg.xml
-			SRVXML_FILE=$CFG_DIR/server.xml
+			APP="confluence"
+			APP_LINK="JIRA"
+			CFG_DIR="$INSTALL_DIR/confluence/conf"
+			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
+			DBXML_FILE="$HOME_DIR/confluence/confluence.cfg.xml"
+			SRVXML_FILE="$CFG_DIR/server.xml"
 			PORT=8090
-			BASE_URL=docs
+			BASE_URL="docs"
 			;;
 		j)
-			APP=jira
-			APP_LINK=Confluence
-			BIN_DIR=$INSTALL_DIR/jira/bin
-			CFG_DIR=$INSTALL_DIR/jira/conf
-			DBXML_FILE=$HOME_DIR/jira/dbconfig.xml
-			SRVXML_FILE=$CFG_DIR/server.xml
+			APP="jira"
+			APP_LINK="Confluence"
+			CFG_DIR="$INSTALL_DIR/jira/conf"
+			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
+			DBXML_FILE="$HOME_DIR/jira/dbconfig.xml"
+			SRVXML_FILE="$CFG_DIR/server.xml"
 			PORT=8080
-			BASE_URL=jira
+			BASE_URL="jira"
+			;;
+		w)
+			APP="crowd"
+			CFG_DIR="$INSTALL_DIR/crowd/apache-tomcat/conf"
+			ENV_FILE="/etc/sysconfig/crowd"
+			DBXML_FILE="$HOME_DIR/crowd/dbconfig.xml"
+			SRVXML_FILE="$CFG_DIR/server.xml"
+			PORT=8095
+			BASE_URL="crowd"
 			;;
 		d)
-                        DB_HOST=$OPTARG
-                        ;;
+			DB_HOST="$OPTARG"
+			;;
 		x)
-			CFGXML_FILE=$OPTARG
+			CFGXML_FILE="$OPTARG"
 			;;
 		s)
-			SQLDUMP_FILE=$OPTARG
+			SQLDUMP_FILE="$OPTARG"
 			;;
 		i)
-			INSTALLDIR_TAR=$OPTARG
+			INSTALLDIR_TAR="$OPTARG"
 			;;
 		h)
-			HOMEDIR_TAR=$OPTARG
+			HOMEDIR_TAR="$OPTARG"
 			;;
 		\?)
-                        echo -e "\nInvalid option: -$OPTARG" >&2
-                        USAGE
-                        exit 1
-                        ;;
-                :)
-                        echo -e "\nOption -$OPTARG requires an argument" >&2
-                        USAGE
-                        exit 1
-                        ;;
-        esac
+			echo -e "\nInvalid option: -$OPTARG" >&2
+			USAGE
+			exit 1
+			;;
+		:)
+			echo -e "\nOption -$OPTARG requires an argument" >&2
+			USAGE
+			exit 1
+			;;
+	esac
 done
 
 for VAR in $APP $DB_HOST $CFGXML_FILE $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
@@ -90,16 +100,18 @@ done
 # Perform checks to determine if this script can run on this server
 # -------------------------------------------------------------------
 
-# A user.sh script should be accessible - this is indicates if $APP is installed
-if [ -s $BIN_DIR/user.sh ] ; then
-	# By sourcing user.sh we import the dedicated $APP user account - should be either confluence or jira
-	. $BIN_DIR/user.sh 
+# Determine if this script can be run on this system
+if [ -s $ENV_FILE ] ; then
+	# By sourcing $ENV_FILE we import the dedicated $APP user account - should be confluence, jira or crowd
+	. $ENV_FILE
 
 	# Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
 	if [ -n "$CONF_USER" ] ; then
 		DED_USER=$CONF_USER
 	elif [ -n "$JIRA_USER" ] ; then
 		DED_USER=$JIRA_USER
+	elif [ -n "$CROWD_USER" ] ; then
+		DED_USER=$CROWD_USER
 	else
 		echo -e "\nA dedicated $APP user account was not found on this system"
 		echo -e "This indicates $APP exists on this system but is not installed properly\n"
@@ -165,9 +177,12 @@ chmod 644 $DBXML_FILE
 if [ "$APP" = "confluence" ] ; then
         DBUSER=`grep username $DBXML_FILE | grep -o "conf[a-zA-Z]*[0-9]*"`
         DBNAME=`grep url $DBXML_FILE | grep -o "conf[a-zA-Z]*[0-9]*"`
-else
+elif [ "$APP" = "jira" ] ; then
         DBUSER=`grep username $DBXML_FILE | grep -o "jira[a-zA-Z]*[0-9]*"`
         DBNAME=`grep url $DBXML_FILE | grep -o "jira[a-zA-Z]*[0-9]*"`
+else
+        DBUSER=`grep username $DBXML_FILE | grep -o "crowd[a-zA-Z]*[0-9]*"`
+        DBNAME=`grep url $DBXML_FILE | grep -o "crowd[a-zA-Z]*[0-9]*"`
 fi
 
 # Before restoring the database, we will drop all existing tables to ensure a clean start
@@ -187,8 +202,8 @@ if [ "$APP" = "confluence" ] ; then
 	echo -e "Some things you will need to do manually in the $APP GUI: \n"
 	echo -e "1. Disable the Mail Servers so $APP does not attempt to send out notificaitons \n"
 	echo -e "2. Modify the Application Link to point to the $APP_LINK Test server \n"
-  echo -e "3. Remove all External Gadget Specification URLs and add Gadget Feed URL to https://jira-test.library.ucla.edu \n"
-else
+	echo -e "3. Remove all External Gadget Specification URLs and add Gadget Feed URL to https://jira-test.library.ucla.edu \n"
+elif [ "$APP" = "jira" ] ; then
 	echo -e "\nThe $APP Test server is now ready."
 	echo -e "Disable Mail so $APP does not attempt to send out notificaitons"
 	echo -e "Start the $APP process and access the URL http://${BASE_URL}-test.library.ucla.edu in your browsers \n"
@@ -197,6 +212,8 @@ else
 	echo -e "1. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
 	echo -e "2. Modify the Application Link to point to the $APP_LINK Test server \n"
 	echo -e "3. Change the Mail server settings to use the lib_atlassiantest mailbox - you'll need to re-enable mail in setenv.sh \n"
+else
+	echo -e "\nThe $APP Test server is now ready."
 fi
 
 echo -e "\nThe archive files you specified on the cmd line are still on this server taking up space"
