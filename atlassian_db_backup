@@ -30,13 +30,14 @@ USAGE() {
 BACKUP_DIR=/atlassianbackup
 SILENT=0
 APP="null"
+DBNAME="null"
 
 while getopts ":cjws" OPT ; do
 	case $OPT in
 		c)
 			APP="confluence"
 			DBXML_CFG="$HOME_DIR/confluence/confluence.cfg.xml"
-			DB_NAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
+			[ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
 			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
 			BACKUP_FILE=confluence_sqldump_`date "+%Y%m%d"`_$$.sql
 			PORT=8090
@@ -44,7 +45,7 @@ while getopts ":cjws" OPT ; do
 		j)
 			APP="jira"
 			DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
-			DB_NAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
+			[ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
 			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
 			BACKUP_FILE=jira_sqldump_`date "+%Y%m%d"`_$$.sql
 			PORT=8080
@@ -52,7 +53,7 @@ while getopts ":cjws" OPT ; do
 		w)
 			APP="crowd"
 			DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
-			DB_NAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
+			[ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
 			ENV_FILE="/etc/sysconfig/crowd"
 			BACKUP_FILE=crowd_sqldump_`date "+%Y%m%d"`_$$.sql
 			PORT=8095
@@ -73,12 +74,13 @@ while getopts ":cjws" OPT ; do
 	esac
 done
 
-for VAR in $APP ; do
-	if [ "$VAR" = "null" ] ; then
-		USAGE
-		exit 1
-	fi
-done
+if [ "$APP" = "null" ] ; then
+	USAGE
+	exit 1
+elif [ "$DBNAME" = "null" ] ; then
+        echo -e "\n$DBXML_CFG does not exist - exiting \n"
+        exit 1
+fi
 
 # Perform checks to determine if this script can run on this server
 if [ -s $ENV_FILE ] ; then
