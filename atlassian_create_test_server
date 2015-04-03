@@ -35,7 +35,7 @@ while getopts ":cjwd:x:s:i:h:" OPT ; do
 	case $OPT in
 		c)
 			APP="confluence"
-			APP_LINK="JIRA"
+			APP_LINK="jira"
 			CFG_DIR="$INSTALL_DIR/confluence/conf"
 			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
 			DBXML_FILE="$HOME_DIR/confluence/confluence.cfg.xml"
@@ -45,7 +45,7 @@ while getopts ":cjwd:x:s:i:h:" OPT ; do
 			;;
 		j)
 			APP="jira"
-			APP_LINK="Confluence"
+			APP_LINK="confluence"
 			CFG_DIR="$INSTALL_DIR/jira/conf"
 			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
 			DBXML_FILE="$HOME_DIR/jira/dbconfig.xml"
@@ -149,6 +149,14 @@ done
 echo -e "\nSetting the base URL to ${BASE_URL}-test.libary.ucla.edu"
 echo -e "This will take some time to complete - please be patient \n"
 sed -i "s/${BASE_URL}.library.ucla.edu/${BASE_URL}-test.library.ucla.edu/g" $SQLDUMP_FILE
+
+# For Confluence we also need to change the base URL for the External Gadget Links to JIRA
+# These will still be pointing to Production JIRA and need change to TEST JIRA
+if [ "$APP" = "confluence" ] ; then
+	echo -e "\nSetting the External Gadget base URL to ${APP_LINK}-test.libary.ucla.edu"
+	echo -e "This will take some time to complete - please be patient \n"
+	sed -i "s/${APP_LINK}.library.ucla.edu/${APP_LINK}-test.library.ucla.edu/g" $SQLDUMP_FILE
+fi
 
 # If necessary remove the existing $APP installation and home directories
 # This ensures a clean environment for the extraction of the tar files
