@@ -45,7 +45,7 @@ while getopts ":cjwd:x:s:i:h:" OPT ; do
 			;;
 		j)
 			APP="jira"
-			APP_LINK="confluence"
+			APP_LINK="docs"
 			CFG_DIR="$INSTALL_DIR/jira/conf"
 			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
 			DBXML_FILE="$HOME_DIR/jira/dbconfig.xml"
