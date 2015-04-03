@@ -201,8 +201,10 @@ if [ "$APP" = "confluence" ] ; then
 
 	echo -e "Some things you will need to do manually in the $APP GUI: \n"
 	echo -e "1. Disable the Mail Servers so $APP does not attempt to send out notificaitons \n"
-	echo -e "2. Modify the Application Link to point to the $APP_LINK Test server \n"
-	echo -e "3. Remove all External Gadget Specification URLs and add Gadget Feed URL to https://jira-test.library.ucla.edu \n"
+	echo -e "2. Modify the Crowd User Directory configuration to point to the Crowd Test server \n"
+	echo -e "3. Modify the Application Link to point to the $APP_LINK Test server \n"
+	echo -e "4. Remove all External Gadget Specification URLs and add Gadget Feed URL to https://jira-test.library.ucla.edu \n"
+	echo -e "5. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
 elif [ "$APP" = "jira" ] ; then
 	echo -e "\nThe $APP Test server is now ready."
 	echo -e "Disable Mail so $APP does not attempt to send out notificaitons"
@@ -210,8 +212,9 @@ elif [ "$APP" = "jira" ] ; then
 
 	echo -e "Some things you will need to do manually in the $APP GUI: \n"
 	echo -e "1. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
-	echo -e "2. Modify the Application Link to point to the $APP_LINK Test server \n"
-	echo -e "3. Change the Mail server settings to use the lib_atlassiantest mailbox - you'll need to re-enable mail in setenv.sh \n"
+	echo -e "2. Modify the Crowd User Directory configuration to point to the Crowd Test server \n"
+	echo -e "3. Modify the Application Link to point to the $APP_LINK Test server \n"
+	echo -e "4. Change the Mail server settings to use the lib_atlassiantest mailbox - you'll need to re-enable mail in setenv.sh \n"
 else
 	echo -e "\nThe $APP Test server is now ready."
 fi
