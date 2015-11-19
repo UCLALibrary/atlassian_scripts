@@ -87,7 +87,7 @@ fi
 mv $BACKUP_DIR/${APP}_*_$TODAY_* $BACKUP_DIR/$TODAY
 
 # -------------------------------------------------------------
-# Rotate Backup Files
+# Rotate Backup Files - Keep Files for $DAYSAGO
 # -------------------------------------------------------------
 
 BACKUP_DATES=`find $BACKUP_DIR -type d -name "[0-9]*" -printf "%f\n" | sort -n`
