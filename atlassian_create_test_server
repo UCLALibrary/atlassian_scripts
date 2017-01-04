@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# This script automates the procedure for creating a Test server for Confluence, JIRA, or Crowd
+# This script automates the procedure for creating a Test server for Confluence or JIRA
 
-# Common directories between Confluence, JIRA, and Crowd
+# Common directories between Confluence or JIRA
 HOME_DIR="/var/atlassian/application-data"
 INSTALL_DIR="/usr/local/atlassian"
 
@@ -15,86 +15,76 @@ HOMEDIR_TAR="null"
 
 # Must be root to run this script
 if [ "`/usr/bin/id -urn`" != "root" ] ; then
-	echo -e "\nYou must be root to execute this script \n"
-	exit 1
+  echo -e "\nYou must be root to execute this script \n"
+  exit 1
 fi
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] -d [DATABASE-HOSTNAME] -x [PATH-TO-CFGXML-FILE] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
-	echo -e "-c		          --> Create a Confluence test server"
-	echo -e "-j			  --> Create a JIRA test server"
-	echo -e "-w			  --> Create a Crowd test server"
-	echo -e "-d DATABASE-HOSTNAME      --> Hostname of MySQL Database server"
-	echo -e "-x PATH-TO-CFGXML-FILE    --> Location of xml file with connection information to the Confluence/JIRA/Crowd Test database"
-	echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the Production SQL DUMP file"
-	echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Production Installation directory archive"
-	echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Production Home directory archive \n"
+  echo -e "\nUsage: `basename $0` [ -c | -j ] -d [DATABASE-HOSTNAME] -x [PATH-TO-CFGXML-FILE] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
+  echo -e "-c                        --> Create a Confluence test server"
+  echo -e "-j                        --> Create a JIRA test server"
+  echo -e "-d DATABASE-HOSTNAME      --> Hostname of MySQL Database server"
+  echo -e "-x PATH-TO-CFGXML-FILE    --> Location of xml file with connection information to the Confluence/JIRA Test database"
+  echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the Production SQL DUMP file"
+  echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Production Installation directory archive"
+  echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Production Home directory archive \n"
 }
 
-while getopts ":cjwd:x:s:i:h:" OPT ; do
-	case $OPT in
-		c)
-			APP="confluence"
-			APP_LINK="jira"
-			CFG_DIR="$INSTALL_DIR/confluence/conf"
-			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
-			DBXML_FILE="$HOME_DIR/confluence/confluence.cfg.xml"
-			SRVXML_FILE="$CFG_DIR/server.xml"
-			PORT=8090
-			BASE_URL="docs"
-			;;
-		j)
-			APP="jira"
-			APP_LINK="docs"
-			CFG_DIR="$INSTALL_DIR/jira/conf"
-			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
-			DBXML_FILE="$HOME_DIR/jira/dbconfig.xml"
-			SRVXML_FILE="$CFG_DIR/server.xml"
-			PORT=8080
-			BASE_URL="jira"
-			;;
-		w)
-			APP="crowd"
-			CFG_DIR="$INSTALL_DIR/crowd/apache-tomcat/conf"
-			ENV_FILE="/etc/sysconfig/crowd"
-			DBXML_FILE="$HOME_DIR/crowd/dbconfig.xml"
-			SRVXML_FILE="$CFG_DIR/server.xml"
-			PORT=8095
-			BASE_URL="crowd"
-			;;
-		d)
-			DB_HOST="$OPTARG"
-			;;
-		x)
-			CFGXML_FILE="$OPTARG"
-			;;
-		s)
-			SQLDUMP_FILE="$OPTARG"
-			;;
-		i)
-			INSTALLDIR_TAR="$OPTARG"
-			;;
-		h)
-			HOMEDIR_TAR="$OPTARG"
-			;;
-		\?)
-			echo -e "\nInvalid option: -$OPTARG" >&2
-			USAGE
-			exit 1
-			;;
-		:)
-			echo -e "\nOption -$OPTARG requires an argument" >&2
-			USAGE
-			exit 1
-			;;
-	esac
+while getopts ":cjd:x:s:i:h:" OPT ; do
+  case $OPT in
+    c)
+      APP="confluence"
+      APP_LINK="jira"
+      CFG_DIR="$INSTALL_DIR/confluence/conf"
+      ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
+      DBXML_FILE="$HOME_DIR/confluence/confluence.cfg.xml"
+      SRVXML_FILE="$CFG_DIR/server.xml"
+      PORT=8090
+      BASE_URL="docs"
+      ;;
+    j)
+      APP="jira"
+      APP_LINK="docs"
+      CFG_DIR="$INSTALL_DIR/jira/conf"
+      ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
+      DBXML_FILE="$HOME_DIR/jira/dbconfig.xml"
+      SRVXML_FILE="$CFG_DIR/server.xml"
+      PORT=8080
+      BASE_URL="jira"
+      ;;
+    d)
+      DB_HOST="$OPTARG"
+      ;;
+    x)
+      CFGXML_FILE="$OPTARG"
+      ;;
+    s)
+      SQLDUMP_FILE="$OPTARG"
+      ;;
+    i)
+      INSTALLDIR_TAR="$OPTARG"
+      ;;
+    h)
+      HOMEDIR_TAR="$OPTARG"
+      ;;
+    \?)
+      echo -e "\nInvalid option: -$OPTARG" >&2
+      USAGE
+      exit 1
+      ;;
+    :)
+      echo -e "\nOption -$OPTARG requires an argument" >&2
+      USAGE
+      exit 1
+      ;;
+  esac
 done
 
 for VAR in $APP $DB_HOST $CFGXML_FILE $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
-        if [ "$VAR" = "null" ] ; then
-                USAGE
-                exit 1
-        fi
+  if [ "$VAR" = "null" ] ; then
+    USAGE
+    exit 1
+  fi
 done
 
 # Perform checks to determine if this script can run on this server
@@ -102,40 +92,38 @@ done
 
 # Determine if this script can be run on this system
 if [ -s $ENV_FILE ] ; then
-	# By sourcing $ENV_FILE we import the dedicated $APP user account - should be confluence, jira or crowd
-	. $ENV_FILE
+  # By sourcing $ENV_FILE we import the dedicated $APP user account - should be confluence or jira
+  . $ENV_FILE
 
-	# Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
-	if [ -n "$CONF_USER" ] ; then
-		DED_USER=$CONF_USER
-	elif [ -n "$JIRA_USER" ] ; then
-		DED_USER=$JIRA_USER
-	elif [ -n "$CROWD_USER" ] ; then
-		DED_USER=$CROWD_USER
-	else
-		echo -e "\nA dedicated $APP user account was not found on this system"
-		echo -e "This indicates $APP exists on this system but is not installed properly\n"
-		exit 1
-	fi
+  # Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
+  if [ -n "$CONF_USER" ] ; then
+    DED_USER=$CONF_USER
+  elif [ -n "$JIRA_USER" ] ; then
+    DED_USER=$JIRA_USER
+  else
+    echo -e "\nA dedicated $APP user account was not found on this system"
+    echo -e "This indicates $APP exists on this system but is not installed properly\n"
+    exit 1
+  fi
 
-	# $APP must not be running
-	if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
-		echo -e "\n$APP is running"
-		echo -e "Stop $APP first before running this script \n"
-		exit 1
-	fi
+  # $APP must not be running
+  if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
+    echo -e "\n$APP is running"
+    echo -e "Stop $APP first before running this script \n"
+    exit 1
+  fi
 else
-	echo -e "\n$APP does not appear to be installed on this system \n"
-        echo -e "Ensure a base install of $APP is available before running this script \n"
-        exit 1
+  echo -e "\n$APP does not appear to be installed on this system \n"
+  echo -e "Ensure a base install of $APP is available before running this script \n"
+  exit 1
 fi
 
 # Verify the file paths given exist and each file contains data
 for FILE in $CFGXML_FILE $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
-	if [ ! -s $FILE ] ; then
-		echo -e "\nCould not find file $FILE or $FILE is empty\n"
-		exit 1
-	fi
+  if [ ! -s $FILE ] ; then
+    echo -e "\nCould not find file $FILE or $FILE is empty\n"
+    exit 1
+  fi
 done
 
 # -------------------------------------------------------------------
@@ -149,16 +137,10 @@ done
 echo -e "\nSetting the base URL to ${BASE_URL}-test.libary.ucla.edu"
 sed -i "s/${BASE_URL}.library.ucla.edu/${BASE_URL}-test.library.ucla.edu/g" $SQLDUMP_FILE
 
-if [ "$APP" != "crowd" ] ; then
-	# Need to change the base URL for any External Gadget Links and the Applicaiton Links
-	# These will still be pointing to Production $APP and need change to TEST $APP_LINK
-	echo -e "\nSetting the Application Link base URL to ${APP_LINK}-test.libary.ucla.edu"
-	sed -i "s/${APP_LINK}.library.ucla.edu/${APP_LINK}-test.library.ucla.edu/g" $SQLDUMP_FILE
-
-	# Need to change the URL for the connection to the Crowd server
-	echo -e "\n Setting the Crowd Server URL to account-test.library.ucla.edu"
-	sed -i "s/account.library.ucla.edu/account-test.library.ucla.edu/g" $SQLDUMP_FILE
-fi
+# Need to change the base URL for any External Gadget Links and the Applicaiton Links
+# These will still be pointing to Production $APP and need change to TEST $APP_LINK
+echo -e "\nSetting the Application Link base URL to ${APP_LINK}-test.libary.ucla.edu"
+sed -i "s/${APP_LINK}.library.ucla.edu/${APP_LINK}-test.library.ucla.edu/g" $SQLDUMP_FILE
 
 # If necessary remove the existing $APP installation and home directories
 # This ensures a clean environment for the extraction of the tar files
@@ -185,14 +167,14 @@ chmod 644 $DBXML_FILE
 
 # Determine the database name and user account from $APP's $DBXML_FILE
 if [ "$APP" = "confluence" ] ; then
-        DBUSER=`grep username $DBXML_FILE | grep -o "conf[a-zA-Z]*[0-9]*"`
-        DBNAME=`grep url $DBXML_FILE | grep -o "conf[a-zA-Z]*[0-9]*"`
+  DBUSER=`grep username $DBXML_FILE | grep -o "conf[a-zA-Z]*[0-9]*"`
+  DBNAME=`grep url $DBXML_FILE | grep -o "conf[a-zA-Z]*[0-9]*"`
 elif [ "$APP" = "jira" ] ; then
-        DBUSER=`grep username $DBXML_FILE | grep -o "jira[a-zA-Z]*[0-9]*"`
-        DBNAME=`grep url $DBXML_FILE | grep -o "jira[a-zA-Z]*[0-9]*"`
+  DBUSER=`grep username $DBXML_FILE | grep -o "jira[a-zA-Z]*[0-9]*"`
+  DBNAME=`grep url $DBXML_FILE | grep -o "jira[a-zA-Z]*[0-9]*"`
 else
-        DBUSER=`grep username $DBXML_FILE | grep -o "crowd[a-zA-Z]*[0-9]*"`
-        DBNAME=`grep url $DBXML_FILE | grep -o "crowd[a-zA-Z]*[0-9]*"`
+  echo -e "\nCould not determine database name and/or user account information \n"
+  exit 1
 fi
 
 # Before restoring the database, we will drop all existing tables to ensure a clean start
@@ -206,24 +188,24 @@ echo -e "This can be a lengthy process - please be patient \n"
 mysql -h $DB_HOST -u $DBUSER -p $DBNAME < $SQLDUMP_FILE
 
 if [ "$APP" = "confluence" ] ; then
-	echo -e "\nThe $APP Test server is now ready."
-	echo -e "Start the $APP process and access the URL http://${BASE_URL}-test.library.ucla.edu in your browser \n"
+  echo -e "\nThe $APP Test server is now ready."
+  echo -e "Start the $APP process and access the URL http://${BASE_URL}-test.library.ucla.edu in your browser \n"
 
-	echo -e "Some things you will need to do manually in the $APP GUI: \n"
-	echo -e "1. Change the Outgoing Mail Server to a fake name so $APP does not attempt to send out notificaitons \n"
-	echo -e "2. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
+  echo -e "Some things you will need to do manually in the $APP GUI: \n"
+  echo -e "1. Change the Outgoing Mail Server to a fake name so $APP does not attempt to send out notificaitons \n"
+  echo -e "2. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
 elif [ "$APP" = "jira" ] ; then
-	echo -e "\nThe $APP Test server is now ready."
-	echo -e "Disable Mail so $APP does not attempt to send out notificaitons"
-	echo -e "Start the $APP process and access the URL http://${BASE_URL}-test.library.ucla.edu in your browsers \n"
+  echo -e "\nThe $APP Test server is now ready."
+  echo -e "Disable Mail so $APP does not attempt to send out notificaitons"
+  echo -e "Start the $APP process and access the URL http://${BASE_URL}-test.library.ucla.edu in your browsers \n"
 
-	echo -e "Some things you will need to do manually in the $APP GUI: \n"
-	echo -e "1. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
-	echo -e "2. Change the Incoming Mail server settings to use the lib_atlassiantest mailbox \n"
-	echo -e "3. Change the Outgoing Mail server settings to use localhost \n"
-	echo -e "4. Stop $APP and re-enable mail in the setenv.sh file \n"
+  echo -e "Some things you will need to do manually in the $APP GUI: \n"
+  echo -e "1. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
+  echo -e "2. Change the Incoming Mail server settings to use the lib_atlassiantest mailbox \n"
+  echo -e "3. Change the Outgoing Mail server settings to use localhost \n"
+  echo -e "4. Stop $APP and re-enable mail in the setenv.sh file \n"
 else
-	echo -e "\nThe $APP Test server is now ready."
+  echo -e "\nThe $APP Test server is now ready."
 fi
 
 echo -e "\nThe archive files you specified on the cmd line are still on this server taking up space"
