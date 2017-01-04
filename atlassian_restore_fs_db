@@ -13,72 +13,72 @@ HOMEDIR_TAR="null"
 
 # Must be root to run this script
 if [ "`/usr/bin/id -urn`" != "root" ] ; then
-	echo -e "\nYou must be root to execute this script \n"
-	exit 1
+  echo -e "\nYou must be root to execute this script \n"
+  exit 1
 fi
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
-	echo -e "-c			  --> Restore a Confluence server"
-        echo -e "-j			  --> Restore a JIRA server"
-        echo -e "-w			  --> Restore a Crowd server"
-	echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the SQL DUMP file"
-	echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Installation directory archive"
-	echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Home directory archive \n"
+  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
+  echo -e "-c                        --> Restore a Confluence server"
+  echo -e "-j                        --> Restore a JIRA server"
+  echo -e "-w                        --> Restore a Crowd server"
+  echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the SQL DUMP file"
+  echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Installation directory archive"
+  echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Home directory archive \n"
 }
 
 while getopts ":cjws:i:h:" OPT ; do
-	case $OPT in
-		c)
-			APP="confluence"
-			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
-			DBXML_CFG="$HOME_DIR/confluence/confluence.cfg.xml"
-			PORT=8090
-			;;
-		j)
-			APP="jira"
-			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
-			DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
-			PORT=8080
-			;;
-		w)
-			APP="crowd"
-			ENV_FILE="/etc/sysconfig/crowd"
-			DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
-			PORT=8095
-			;;
-		s)
-			SQLDUMP_FILE="$OPTARG"
-			;;
-		i)
-			INSTALLDIR_TAR="$OPTARG"
-			;;
-		h)
-			HOMEDIR_TAR="$OPTARG"
-			;;
-		\?)
-                        echo -e "\nInvalid option: -$OPTARG" >&2
-                        USAGE
-                        exit 1
-                        ;;
-                :)
-                        echo -e "\nOption -$OPTARG requires an argument" >&2
-                        USAGE
-                        exit 1
-                        ;;
-        esac
+  case $OPT in
+    c)
+      APP="confluence"
+      ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
+      DBXML_CFG="$HOME_DIR/confluence/confluence.cfg.xml"
+      PORT=8090
+      ;;
+    j)
+      APP="jira"
+      ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
+      DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
+      PORT=8080
+      ;;
+    w)
+      APP="crowd"
+      ENV_FILE="/etc/sysconfig/crowd"
+      DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
+      PORT=8095
+      ;;
+    s)
+      SQLDUMP_FILE="$OPTARG"
+      ;;
+    i)
+      INSTALLDIR_TAR="$OPTARG"
+      ;;
+    h)
+      HOMEDIR_TAR="$OPTARG"
+      ;;
+    \?)
+      echo -e "\nInvalid option: -$OPTARG" >&2
+      USAGE
+      exit 1
+      ;;
+    :)
+      echo -e "\nOption -$OPTARG requires an argument" >&2
+      USAGE
+      exit 1
+      ;;
+  esac
 done
 
 for VAR in $APP $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
-        if [ "$VAR" = "null" ] ; then
-                USAGE
-                exit 1
-        fi
+  if [ "$VAR" = "null" ] ; then
+    USAGE
+    exit 1
+  fi
 done
 
 if [ ! -f $DBXML_CFG ] ; then
-	echo -e "\n$DBXML_CFG does not exist - exiting \n"
-	exit 1
+  echo -e "\n$DBXML_CFG does not exist - exiting \n"
+  exit 1
 fi
 
 # Perform checks to determine if this script can run on this server
@@ -86,34 +86,34 @@ fi
 
 # $ENV_FILE should be accessible - this is indicates if $APP is installed
 if [ -s $ENV_FILE ] ; then
-	# By sourcing $ENV_FILE we import the dedicated $APP user account - should be either confluence, jira or crowd
-	. $ENV_FILE
+  # By sourcing $ENV_FILE we import the dedicated $APP user account - should be either confluence, jira or crowd
+  . $ENV_FILE
 
-	# Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
-	if [ -z "$CONF_USER" -a -z "$JIRA_USER" -a -z "$CROWD_USER" ] ; then
-                echo -e "\nA dedicated $APP user account was not found on this system \n"
-		echo -e "This indicates $APP exists on this system but is not installed properly\n"
-                exit 1
-        fi
+  # Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
+  if [ -z "$CONF_USER" -a -z "$JIRA_USER" -a -z "$CROWD_USER" ] ; then
+    echo -e "\nA dedicated $APP user account was not found on this system \n"
+    echo -e "This indicates $APP exists on this system but is not installed properly\n"
+    exit 1
+  fi
 
-	# $APP must not be running
-	if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
-		echo -e "\n$APP is running"
-		echo -e "Stop $APP first before running this script \n"
-		exit 1
-	fi
+  # $APP must not be running
+  if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
+    echo -e "\n$APP is running"
+    echo -e "Stop $APP first before running this script \n"
+    exit 1
+  fi
 else
-	echo -e "\n$APP does not appear to be installed on this system \n"
-        echo -e "Ensure a base install of $APP is available before running this script \n"
-        exit 1
+  echo -e "\n$APP does not appear to be installed on this system \n"
+  echo -e "Ensure a base install of $APP is available before running this script \n"
+  exit 1
 fi
 
 # Verify the file paths given exist and each file contains data
 for FILE in $SQLDUMP_FILE $INSTALLDIR_TAR $HOMEDIR_TAR ; do
-	if [ ! -s $FILE ] ; then
-		echo -e "\nCould not find file $FILE or $FILE is empty\n"
-		exit 1
-	fi
+  if [ ! -s $FILE ] ; then
+    echo -e "\nCould not find file $FILE or $FILE is empty\n"
+    exit 1
+  fi
 done
 
 # -------------------------------------------------------------------
@@ -140,11 +140,11 @@ tar xzf $HOMEDIR_TAR -C $HOME_DIR
 ## --database which means something different to each command.
 ## This is why we get the databse name from the $DBXML_CFG file.
 if [ "$APP" = "confluence" ] ; then
-	DBNAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
+  DBNAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
 elif [ "$APP" = "jira" ] ; then
-	DBNAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
+  DBNAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
 else
-	DBNAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
+  DBNAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
 fi
 
 # Before restoring the database, we will drop all existing tables to ensure a clean start
@@ -157,8 +157,8 @@ echo -e "\nRestoring $SQLDUMP_FILE to the $APP database"
 echo -e "This can be a lengthy process - please be patient \n"
 mysql $DBNAME < $SQLDUMP_FILE
 if [ $? -ne 0 ] ; then
-	echo -e "\nThere was a problem restoring the MySQL backup\n"
-	exit 1
+  echo -e "\nThere was a problem restoring the MySQL backup\n"
+  exit 1
 fi
 
 echo -e "\nRestoration of the $APP server is complete."
