@@ -11,8 +11,8 @@
 
 # Must be root to run this script
 if [ "`/usr/bin/id -urn`" != "root" ] ; then
-        echo -e "\nYou must be root to execute this script \n"
-        exit 1
+  echo -e "\nYou must be root to execute this script \n"
+  exit 1
 fi
 
 # Common directory between Confluence, JIRA or Crowd
@@ -20,11 +20,11 @@ INSTALL_DIR="/usr/local/atlassian"
 HOME_DIR="/var/atlassian/application-data"
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] [ -s ]"
-	echo -e "-c --> Backup Confluence MySQL DB"
-	echo -e "-j --> Backup JIRA MySQL DB"
-	echo -e "-w --> Backup Crowd MySQL DB"
-	echo -e "-s --> Indicate this script should run in silent mode\n"
+  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] [ -s ]"
+  echo -e "-c --> Backup Confluence MySQL DB"
+  echo -e "-j --> Backup JIRA MySQL DB"
+  echo -e "-w --> Backup Crowd MySQL DB"
+  echo -e "-s --> Indicate this script should run in silent mode\n"
 }
 
 BACKUP_DIR=/atlassianbackup
@@ -33,84 +33,84 @@ APP="null"
 DB_NAME="null"
 
 while getopts ":cjws" OPT ; do
-	case $OPT in
-		c)
-			APP="confluence"
-			DBXML_CFG="$HOME_DIR/confluence/confluence.cfg.xml"
-			[ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
-			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
-			BACKUP_FILE=confluence_sqldump_`date "+%Y%m%d"`_$$.sql
-			PORT=8090
-			;;
-		j)
-			APP="jira"
-			DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
-			[ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
-			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
-			BACKUP_FILE=jira_sqldump_`date "+%Y%m%d"`_$$.sql
-			PORT=8080
-			;;
-		w)
-			APP="crowd"
-			DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
-			[ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
-			ENV_FILE="/etc/sysconfig/crowd"
-			BACKUP_FILE=crowd_sqldump_`date "+%Y%m%d"`_$$.sql
-			PORT=8095
-			;;
-		s)
-			SILENT=1
-			;;
-		\?)
-			echo -e "\nInvalid option: -$OPTARG" >&2
-			USAGE
-			exit 1
-			;;
-		:)
-			echo -e "\nOption -$OPTARG requires an argument" >&2
-			USAGE
-			exit 1
-			;;
-	esac
+  case $OPT in
+    c)
+      APP="confluence"
+      DBXML_CFG="$HOME_DIR/confluence/confluence.cfg.xml"
+      [ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "conf[a-zA-Z]*[0-9]*"`
+      ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
+      BACKUP_FILE=confluence_sqldump_`date "+%Y%m%d"`_$$.sql
+      PORT=8090
+      ;;
+    j)
+      APP="jira"
+      DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
+      [ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
+      ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
+      BACKUP_FILE=jira_sqldump_`date "+%Y%m%d"`_$$.sql
+      PORT=8080
+      ;;
+    w)
+      APP="crowd"
+      DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
+      [ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
+      ENV_FILE="/etc/sysconfig/crowd"
+      BACKUP_FILE=crowd_sqldump_`date "+%Y%m%d"`_$$.sql
+      PORT=8095
+      ;;
+    s)
+      SILENT=1
+      ;;
+    \?)
+      echo -e "\nInvalid option: -$OPTARG" >&2
+      USAGE
+      exit 1
+      ;;
+    :)
+      echo -e "\nOption -$OPTARG requires an argument" >&2
+      USAGE
+      exit 1
+      ;;
+  esac
 done
 
 if [ "$APP" = "null" ] ; then
-	USAGE
-	exit 1
+  USAGE
+  exit 1
 elif [ "$DB_NAME" = "null" ] ; then
-        echo -e "\n$DBXML_CFG does not exist - exiting \n"
-        exit 1
+  echo -e "\n$DBXML_CFG does not exist - exiting \n"
+  exit 1
 fi
 
 # Perform checks to determine if this script can run on this server
 if [ -s $ENV_FILE ] ; then
-	# If script was invoked with the -s flag - skip check if $APP is running
-	if [ $SILENT -eq 0 ] ; then
-		# Test to see if $APP is running
-		if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
-			echo -e "\n$APP is running!"
-			echo -e "It is not required, but recommended, that you stop $APP before proceeding with a back-up."
-			echo -n "Do you want me to stop $APP ? (y/n): "
-			read ANSWER
+  # If script was invoked with the -s flag - skip check if $APP is running
+  if [ $SILENT -eq 0 ] ; then
+    # Test to see if $APP is running
+    if [ "`netstat -nlt | grep $PORT`" != "" ] ; then
+      echo -e "\n$APP is running!"
+      echo -e "It is not required, but recommended, that you stop $APP before proceeding with a back-up."
+      echo -n "Do you want me to stop $APP ? (y/n): "
+      read ANSWER
 
-			case "$ANSWER" in
-				y|Y)
-					echo -e "\nStopping $APP now... \n"
-					/sbin/service $APP stop
-					;;
-				n|N)
-					echo -e "\nOK - moving on without stopping $APP \n"
-					;;
-				*)
-					echo -e "\nDid not understand your answer - exiting \n"
-					exit 1
-					;;
-			esac
-		fi
-	fi
+      case "$ANSWER" in
+        y|Y)
+          echo -e "\nStopping $APP now... \n"
+          /sbin/service $APP stop
+          ;;
+        n|N)
+          echo -e "\nOK - moving on without stopping $APP \n"
+          ;;
+        *)
+          echo -e "\nDid not understand your answer - exiting \n"
+          exit 1
+          ;;
+      esac
+    fi
+  fi
 else
-        echo -e "\nCould not locate a $APP installation on this system \n"
-        exit 1
+  echo -e "\nCould not locate a $APP installation on this system \n"
+  exit 1
 fi
 
 # See https://docs.library.ucla.edu/x/GoA4Bw for details regarding the mysqldump options
@@ -118,11 +118,11 @@ echo -e "Starting back-up of the $DB_NAME database"
 echo -e "For a large database this can be a lenghtly process"
 mysqldump --opt --max_allowed_packet=64MB $DB_NAME > $BACKUP_DIR/$BACKUP_FILE
 if [ $? -ne 0 ] ; then
-	echo "mysqldump encountered an error and the back-up failed."
-	if [ -f $BACKUP_DIR/$BACKUP_FILE ]; then
-		rm -f $BACKUP_DIR/$BACKUP_FILE
-	fi
-	exit 1
+  echo "mysqldump encountered an error and the back-up failed."
+  if [ -f $BACKUP_DIR/$BACKUP_FILE ]; then
+    rm -f $BACKUP_DIR/$BACKUP_FILE
+  fi
+  exit 1
 fi
 echo -e "\nBackup is complete and is available at $BACKUP_DIR/$BACKUP_FILE"
 echo -e "If you stopped $APP remember to start it up again \n"
