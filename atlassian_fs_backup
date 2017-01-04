@@ -4,15 +4,15 @@
 
 # Must be root to run this script
 if [ "`/usr/bin/id -urn`" != "root" ] ; then
-        echo -e "\nYou must be root to execute this script \n"
-        exit 1
+  echo -e "\nYou must be root to execute this script \n"
+  exit 1
 fi
 
 USAGE() {
-	echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
-	echo -e "-c --> Backup Confluence filesystem"
-	echo -e "-j --> Backup JIRA filesystem"
-	echo -e "-w --> Backup Crowd filesystem"
+  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
+  echo -e "-c --> Backup Confluence filesystem"
+  echo -e "-j --> Backup JIRA filesystem"
+  echo -e "-w --> Backup Crowd filesystem"
 }
 
 BACKUP_DIR="/atlassianbackup"
@@ -22,67 +22,67 @@ BIN_DIR="null"
 APP="null"
 
 while getopts ":cjw" OPT ; do
-	case $OPT in
-		c)
-			APP="confluence"
-			ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
-			INSTALL_DIR_ARCH=confluence_installdir_`date "+%Y%m%d"`_$$.tar.gz
-			HOME_DIR_ARCH=confluence_homedir_`date "+%Y%m%d"`_$$.tar.gz
-			;;
-		j)
-			APP="jira"
-			ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
-			INSTALL_DIR_ARCH=jira_installdir_`date "+%Y%m%d"`_$$.tar.gz
-			HOME_DIR_ARCH=jira_homedir_`date "+%Y%m%d"`_$$.tar.gz
-			;;
-		w)
-			APP="crowd"
-			ENV_FILE="/etc/sysconfig/crowd"
-			INSTALL_DIR_ARCH=crowd_installdir_`date "+%Y%m%d"`_$$.tar.gz
-			HOME_DIR_ARCH=crowd_homedir_`date "+%Y%m%d"`_$$.tar.gz
-			;;
-		\?)
-			echo -e "\nInvalid option: -$OPTARG" >&2
-			USAGE
-			exit 1
-			;;
-		:)
-			echo -e "\nOption -$OPTARG requires an argument" >&2
-			USAGE
-			exit 1
-			;;
-	esac
+  case $OPT in
+    c)
+      APP="confluence"
+      ENV_FILE="$INSTALL_DIR/confluence/bin/user.sh"
+      INSTALL_DIR_ARCH=confluence_installdir_`date "+%Y%m%d"`_$$.tar.gz
+      HOME_DIR_ARCH=confluence_homedir_`date "+%Y%m%d"`_$$.tar.gz
+      ;;
+    j)
+      APP="jira"
+      ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
+      INSTALL_DIR_ARCH=jira_installdir_`date "+%Y%m%d"`_$$.tar.gz
+      HOME_DIR_ARCH=jira_homedir_`date "+%Y%m%d"`_$$.tar.gz
+      ;;
+    w)
+      APP="crowd"
+      ENV_FILE="/etc/sysconfig/crowd"
+      INSTALL_DIR_ARCH=crowd_installdir_`date "+%Y%m%d"`_$$.tar.gz
+      HOME_DIR_ARCH=crowd_homedir_`date "+%Y%m%d"`_$$.tar.gz
+      ;;
+    \?)
+      echo -e "\nInvalid option: -$OPTARG" >&2
+      USAGE
+      exit 1
+      ;;
+    :)
+      echo -e "\nOption -$OPTARG requires an argument" >&2
+      USAGE
+      exit 1
+      ;;
+  esac
 done
 
 if [ "$APP" == "null" ] ; then
-	USAGE
-	exit 1
+  USAGE
+  exit 1
 fi
 
 # Perform check to determine if this script can run on this server
 if [ ! -s $ENV_FILE ] ; then
-	echo -e "\nCould not locate a $APP installation on this system \n"
-	exit 1
+  echo -e "\nCould not locate a $APP installation on this system \n"
+  exit 1
 fi
 
 echo -e "Starting back-up of the $APP filesystem \n"
 echo -e "Backing-up $APP Installation directory..."
 tar czf $BACKUP_DIR/$INSTALL_DIR_ARCH -C $INSTALL_DIR . > /dev/null 2>&1
 if [ $? -ne 0 -a $? -ne 1 ] ; then
-	echo -e "\nFailed to create the Installation directory archive - exiting \n"
-	if [ -f $BACKUP_DIR/$INSTALL_DIR_ARCH ]; then
-		rm -f $BACKUP_DIR/$INSTALL_DIR_ARCH
-	fi
-	exit 1
+  echo -e "\nFailed to create the Installation directory archive - exiting \n"
+  if [ -f $BACKUP_DIR/$INSTALL_DIR_ARCH ]; then
+    rm -f $BACKUP_DIR/$INSTALL_DIR_ARCH
+  fi
+  exit 1
 fi
 echo -e "Backing-up $APP Home directory..."
 tar czf $BACKUP_DIR/$HOME_DIR_ARCH -C $HOME_DIR . > /dev/null 2>&1
 if [ $? -ne 0 -a $? -ne 1 ] ; then
-	echo -e "\nFailed to create the Home directory archive - exiting \n"
-	if [ -f $BACKUP_DIR/$HOME_DIR_ARCH ]; then
-		rm -f $BACKUP_DIR/$HOME_DIR_ARCH
-	fi
-	exit 1
+  echo -e "\nFailed to create the Home directory archive - exiting \n"
+  if [ -f $BACKUP_DIR/$HOME_DIR_ARCH ]; then
+    rm -f $BACKUP_DIR/$HOME_DIR_ARCH
+  fi
+  exit 1
 fi
 
 echo -e "\nBackup is complete and is available at $BACKUP_DIR/$INSTALL_DIR_ARCH and $BACKUP_DIR/$HOME_DIR_ARCH"
