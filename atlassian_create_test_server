@@ -139,6 +139,7 @@ sed -i "s/${BASE_URL}.library.ucla.edu/${BASE_URL}-test.library.ucla.edu/g" $SQL
 
 # Need to change the base URL for any External Gadget Links and the Applicaiton Links
 # These will still be pointing to Production $APP and need change to TEST $APP_LINK
+# This also points Service Desk to the correct Confluence KB URL if $APP = jira
 echo -e "\nSetting the Application Link base URL to ${APP_LINK}-test.libary.ucla.edu"
 sed -i "s/${APP_LINK}.library.ucla.edu/${APP_LINK}-test.library.ucla.edu/g" $SQLDUMP_FILE
 
@@ -196,14 +197,16 @@ if [ "$APP" = "confluence" ] ; then
   echo -e "2. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
 elif [ "$APP" = "jira" ] ; then
   echo -e "\nThe $APP Test server is now ready."
-  echo -e "Disable Mail so $APP does not attempt to send out notificaitons"
+  echo -e "Disable Mail so $APP does not attempt to send out notificaitons - do this in the setenv.sh file \n"
   echo -e "Start the $APP process and access the URL http://${BASE_URL}-test.library.ucla.edu in your browsers \n"
 
   echo -e "Some things you will need to do manually in the $APP GUI: \n"
-  echo -e "1. Install the developer $APP license - you'll need to obtain this from the atlassian account website \n"
+  echo -e "1. Install the developer $APP license - you'll need to obtain this from the my.atlassian.com portal \n"
   echo -e "2. Change the Incoming Mail server settings to use the lib_atlassiantest mailbox \n"
   echo -e "3. Change the Outgoing Mail server settings to use localhost \n"
-  echo -e "4. Stop $APP and re-enable mail in the setenv.sh file \n"
+  echo -e "4. Disable Service Desk notifications \n"
+  echo -e "5. Disable email requests for all Service Desk portals \n"
+  echo -e "?. Stop $APP and re-enable mail in the setenv.sh file \n"
 else
   echo -e "\nThe $APP Test server is now ready."
 fi
