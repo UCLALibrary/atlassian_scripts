@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# JIRA/Confluence/Crowd do not have built in functionality to expire Tomcat logs:
+# JIRA/Confluence do not have built in functionality to expire Tomcat logs:
 # access_log.DATE
 # catalina.DATE.log
 # host-manager.DATE.log
@@ -18,10 +18,9 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
+  echo -e "\nUsage: `basename $0` [ -c | -j ] "
   echo -e "-c --> Rotate Confluence Tomcat logs"
   echo -e "-j --> Rotate JIRA Tomcat logs"
-  echo -e "-w --> Rotate Crowd Tomcat logs"
 }
 
 INSTALL_DIR="/usr/local/atlassian"
@@ -37,10 +36,6 @@ while getopts ":cjw" OPT ; do
     j)
       APP="jira"
       TOMCAT_LOG_DIR="$INSTALL_DIR/jira/logs"
-      ;;
-    w)
-      APP="crowd"
-      TOMCAT_LOG_DIR="$INSTALL_DIR/crowd/apache-tomcat/logs"
       ;;
     \?)
       echo -e "\nInvalid option: -$OPTARG" >&2

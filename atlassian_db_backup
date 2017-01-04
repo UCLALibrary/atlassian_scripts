@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Creates a MySQL DB backup of the Confluence, JIRA, or Crowd MySQL database
+# Creates a MySQL DB backup of the Confluence or JIRA MySQL database
 
 # Get the database name from $APP's $DBXML_CFG file
 # Get the mysql hostname, username, and password from the .my.cnf file
@@ -15,15 +15,14 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
   exit 1
 fi
 
-# Common directory between Confluence, JIRA or Crowd
+# Common directory between Confluence and JIRA
 INSTALL_DIR="/usr/local/atlassian"
 HOME_DIR="/var/atlassian/application-data"
 
 USAGE() {
-  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] [ -s ]"
+  echo -e "\nUsage: `basename $0` [ -c | -j ] [ -s ]"
   echo -e "-c --> Backup Confluence MySQL DB"
   echo -e "-j --> Backup JIRA MySQL DB"
-  echo -e "-w --> Backup Crowd MySQL DB"
   echo -e "-s --> Indicate this script should run in silent mode\n"
 }
 
@@ -49,14 +48,6 @@ while getopts ":cjws" OPT ; do
       ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
       BACKUP_FILE=jira_sqldump_`date "+%Y%m%d"`_$$.sql
       PORT=8080
-      ;;
-    w)
-      APP="crowd"
-      DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
-      [ -f $DBXML_CFG ] && DB_NAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
-      ENV_FILE="/etc/sysconfig/crowd"
-      BACKUP_FILE=crowd_sqldump_`date "+%Y%m%d"`_$$.sql
-      PORT=8095
       ;;
     s)
       SILENT=1

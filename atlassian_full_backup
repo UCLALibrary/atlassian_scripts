@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is meant to be run as a root cronjob to backup a Confluence, JIRA or Crowd server
+# This script is meant to be run as a root cronjob to backup a Confluence or JIRA server
 # It utilizes two scripts:
 # - atlassian_fs_backup - create filesystem backup
 # - atlassian_db_backup - crate database backup
@@ -15,10 +15,9 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
+  echo -e "\nUsage: `basename $0` [ -c | -j ] "
   echo -e "-c --> Backup Confluence"
   echo -e "-j --> Backup JIRA"
-  echo -e "-w --> Backup Crowd"
 }
 
 BACKUP_DIR="/atlassianbackup"
@@ -40,11 +39,6 @@ while getopts ":cjw" OPT ; do
       APP="jira"
       FS_OPTIONS="-j"
       DB_OPTIONS="-j -s"
-      ;;
-    w)
-      APP="crowd"
-      FS_OPTIONS="-w"
-      DB_OPTIONS="-w -s"
       ;;
     \?)
       echo -e "\nInvalid option: -$OPTARG" >&2

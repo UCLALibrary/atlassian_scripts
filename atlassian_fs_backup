@@ -9,10 +9,9 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
+  echo -e "\nUsage: `basename $0` [ -c | -j ] "
   echo -e "-c --> Backup Confluence filesystem"
   echo -e "-j --> Backup JIRA filesystem"
-  echo -e "-w --> Backup Crowd filesystem"
 }
 
 BACKUP_DIR="/atlassianbackup"
@@ -34,12 +33,6 @@ while getopts ":cjw" OPT ; do
       ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
       INSTALL_DIR_ARCH=jira_installdir_`date "+%Y%m%d"`_$$.tar.gz
       HOME_DIR_ARCH=jira_homedir_`date "+%Y%m%d"`_$$.tar.gz
-      ;;
-    w)
-      APP="crowd"
-      ENV_FILE="/etc/sysconfig/crowd"
-      INSTALL_DIR_ARCH=crowd_installdir_`date "+%Y%m%d"`_$$.tar.gz
-      HOME_DIR_ARCH=crowd_homedir_`date "+%Y%m%d"`_$$.tar.gz
       ;;
     \?)
       echo -e "\nInvalid option: -$OPTARG" >&2

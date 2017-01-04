@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# This script automates the procedure for restoring Confluence, JIRA or Crowd filesystem and database backups
+# This script automates the procedure for restoring Confluence or JIRA filesystem and database backups
 
-# Common directories between Confluence, JIRA and Crowd
+# Common directories between Confluence and JIRA
 HOME_DIR="/var/atlassian/application-data"
 INSTALL_DIR="/usr/local/atlassian"
 
@@ -18,10 +18,9 @@ if [ "`/usr/bin/id -urn`" != "root" ] ; then
 fi
 
 USAGE() {
-  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
+  echo -e "\nUsage: `basename $0` [ -c | -j ] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]"
   echo -e "-c                        --> Restore a Confluence server"
   echo -e "-j                        --> Restore a JIRA server"
-  echo -e "-w                        --> Restore a Crowd server"
   echo -e "-s PATH-TO-SQLDUMP-FILE   --> Location of the SQL DUMP file"
   echo -e "-i PATH-TO-INSTALLDIR-TAR --> Location of the Installation directory archive"
   echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Home directory archive \n"
@@ -40,12 +39,6 @@ while getopts ":cjws:i:h:" OPT ; do
       ENV_FILE="$INSTALL_DIR/jira/bin/user.sh"
       DBXML_CFG="$HOME_DIR/jira/dbconfig.xml"
       PORT=8080
-      ;;
-    w)
-      APP="crowd"
-      ENV_FILE="/etc/sysconfig/crowd"
-      DBXML_CFG="$HOME_DIR/crowd/crowd.cfg.xml"
-      PORT=8095
       ;;
     s)
       SQLDUMP_FILE="$OPTARG"
@@ -86,11 +79,11 @@ fi
 
 # $ENV_FILE should be accessible - this is indicates if $APP is installed
 if [ -s $ENV_FILE ] ; then
-  # By sourcing $ENV_FILE we import the dedicated $APP user account - should be either confluence, jira or crowd
+  # By sourcing $ENV_FILE we import the dedicated $APP user account - should be either confluence or jira
   . $ENV_FILE
 
   # Dedicated $APP user account stored in $CONF_USER or $JIRA_USER
-  if [ -z "$CONF_USER" -a -z "$JIRA_USER" -a -z "$CROWD_USER" ] ; then
+  if [ -z "$CONF_USER" -a -z "$JIRA_USER" ] ; then
     echo -e "\nA dedicated $APP user account was not found on this system \n"
     echo -e "This indicates $APP exists on this system but is not installed properly\n"
     exit 1
@@ -144,7 +137,8 @@ if [ "$APP" = "confluence" ] ; then
 elif [ "$APP" = "jira" ] ; then
   DBNAME=`grep url $DBXML_CFG | grep -o "jira[a-zA-Z]*[0-9]*"`
 else
-  DBNAME=`grep url $DBXML_CFG | grep -o "crowd[a-zA-Z]*[0-9]*"`
+  echo -e "\n Unable to determine database name from configuration files \n"
+  exit 1
 fi
 
 # Before restoring the database, we will drop all existing tables to ensure a clean start
