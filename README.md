@@ -6,7 +6,6 @@ These scripts can be used on the Library's Confluence, JIRA and Crowd servers fo
 
 * atlassian_create_test_server : Creates a Confluence, JIRA or Crowd test server given the back-up files of a production server
 ```
-#!text
 
 Usage: atlassian_create_test_server [ -c | -j | -w ] -d [DATABASE-HOSTNAME] -x [PATH-TO-CFGXML-FILE] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]
 -c        --> Create a Confluence test server
@@ -20,7 +19,6 @@ Usage: atlassian_create_test_server [ -c | -j | -w ] -d [DATABASE-HOSTNAME] -x [
 ```
 * atlassian_db_backup : Perform a Confluence, JIRA or Crowd database backup
 ```
-#!text
 
 Usage: atlassian_db_backup [ -c | -j | -w ] [ -s ]
 -c --> Backup Confluence MySQL DB
@@ -30,13 +28,11 @@ Usage: atlassian_db_backup [ -c | -j | -w ] [ -s ]
 ```
 * atlassian_drop_db_tables : Drops all tables from the specified database - this is used during restore operations to ensure a clean database
 ```
-#!text
 
 Usage: atlassian_drop_db_tables <DBNAME>
 ```
 * atlassian_fs_backup : Performs a Confluence, JIRA or Crowd filesystem backup - creates tar.gz of the Installation and Home directories
 ```
-#!text
 
 Usage: atlassian_fs_backup [ -c | -j | -w ]
 -c --> Backup Confluence filesystem
@@ -45,7 +41,6 @@ Usage: atlassian_fs_backup [ -c | -j | -w ]
 ```
 * atlassian_full_backup : Performs a complete Confluence, JIRA or Crowd backup (both db and filesystem) - this can be run in a cron job or on-demand
 ```
-#!text
 
 Usage: atlassian_full_backup [ -c | -j | -w ]
 -c --> Backup Confluence
@@ -54,7 +49,6 @@ Usage: atlassian_full_backup [ -c | -j | -w ]
 ```
 * atlassian_restore_fs_db : Performs a Confluence, JIRA or Crowd restoration taking the database and filesystem back-ups as input
 ```
-#!text
 
 Usage: atlassian_restore_fs_db [ -c | -j | -w  ] -s [PATH-TO-SQLDUMP-FILE] -i [PATH-TO-INSTALLDIR-TAR] -h [PATH-TO-HOMEDIR-TAR]
 -c        --> Restore a Confluence server
@@ -66,7 +60,6 @@ Usage: atlassian_restore_fs_db [ -c | -j | -w  ] -s [PATH-TO-SQLDUMP-FILE] -i [P
 ```
 * atlassian_rotate_tomcat_logs : Handles the expiration of Tomcat's log files since Atlassian doesn't do this - this should be run as a cron job
 ```
-#!text
 
 Usage: atlassian_rotate_tomcat_logs [ -c | -j | -w ]
 -c --> Rotate Confluence
