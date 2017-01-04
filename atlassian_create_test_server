@@ -206,7 +206,7 @@ elif [ "$APP" = "jira" ] ; then
   echo -e "3. Change the Outgoing Mail server settings to use localhost \n"
   echo -e "4. Disable Service Desk notifications \n"
   echo -e "5. Disable email requests for all Service Desk portals \n"
-  echo -e "?. Stop $APP and re-enable mail in the setenv.sh file \n"
+  echo -e "6. Stop $APP and re-enable mail in the setenv.sh file \n"
 else
   echo -e "\nThe $APP Test server is now ready."
 fi
