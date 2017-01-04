@@ -10,15 +10,15 @@
 
 # Must be root to run this script
 if [ "`/usr/bin/id -urn`" != "root" ] ; then
-        echo -e "\nYou must be root to execute this script \n"
-        exit 1
+  echo -e "\nYou must be root to execute this script \n"
+  exit 1
 fi
 
 USAGE() {
-        echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
-        echo -e "-c --> Backup Confluence"
-        echo -e "-j --> Backup JIRA"
-        echo -e "-w --> Backup Crowd"
+  echo -e "\nUsage: `basename $0` [ -c | -j | -w ] "
+  echo -e "-c --> Backup Confluence"
+  echo -e "-j --> Backup JIRA"
+  echo -e "-w --> Backup Crowd"
 }
 
 BACKUP_DIR="/atlassianbackup"
@@ -30,38 +30,38 @@ DAYSAGO=`date -d 'now - 1 days' "+%Y%m%d"`
 APP="null"
 
 while getopts ":cjw" OPT ; do
-        case $OPT in
-                c)
-                        APP="confluence"
-			FS_OPTIONS="-c"
-			DB_OPTIONS="-c -s"
-                        ;;
-                j)
-                        APP="jira"
-			FS_OPTIONS="-j"
-			DB_OPTIONS="-j -s"
-                        ;;
-                w)
-                        APP="crowd"
-			FS_OPTIONS="-w"
-			DB_OPTIONS="-w -s"
-                        ;;
-                \?)
-                        echo -e "\nInvalid option: -$OPTARG" >&2
-                        USAGE
-                        exit 1
-                        ;;
-                :)
-                        echo -e "\nOption -$OPTARG requires an argument" >&2
-                        USAGE
-                        exit 1
-                        ;;
-        esac
+  case $OPT in
+    c)
+      APP="confluence"
+      FS_OPTIONS="-c"
+      DB_OPTIONS="-c -s"
+      ;;
+    j)
+      APP="jira"
+      FS_OPTIONS="-j"
+      DB_OPTIONS="-j -s"
+      ;;
+    w)
+      APP="crowd"
+      FS_OPTIONS="-w"
+      DB_OPTIONS="-w -s"
+      ;;
+    \?)
+      echo -e "\nInvalid option: -$OPTARG" >&2
+      USAGE
+      exit 1
+      ;;
+    :)
+      echo -e "\nOption -$OPTARG requires an argument" >&2
+      USAGE
+      exit 1
+      ;;
+  esac
 done
 
 if [ "$APP" == "null" ] ; then
-        USAGE
-        exit 1
+  USAGE
+  exit 1
 fi
 
 # -------------------------------------------------------------
@@ -73,15 +73,15 @@ mkdir -p $BACKUP_DIR/$TODAY
 echo -e "\nPerforming $APP filesystem backup..."
 $FS_BACKUP $FS_OPTIONS
 if [ $? -ne 0 ] ; then
-	echo -e "Error performing $APP filesystem backup! Exiting from backup process.\n"
-	exit 1
+  echo -e "Error performing $APP filesystem backup! Exiting from backup process.\n"
+  exit 1
 fi
 
 echo -e "\nPerforming $APP database backup..."
 $DB_BACKUP $DB_OPTIONS
 if [ $? -ne 0 ] ; then
-	echo -e "Error performing $APP database backup! Exiting from backup process.\n"
-	exit 1
+  echo -e "Error performing $APP database backup! Exiting from backup process.\n"
+  exit 1
 fi
 
 mv $BACKUP_DIR/${APP}_*_$TODAY_* $BACKUP_DIR/$TODAY
@@ -95,9 +95,9 @@ BACKUP_DATES=`find $BACKUP_DIR -type d -name "[0-9]*" -printf "%f\n" | sort -n`
 # Each backup directory is named in YYYYMMDD format based on the day it was created.
 # If a directory's name is older than $DAYSAGO, the directory is removed.
 if [ -n "$BACKUP_DATES" ] ; then
-	for DATE in $BACKUP_DATES ; do
-		if [ $(( $DATE - $DAYSAGO )) -lt 0 ] ; then
-			rm -rf $BACKUP_DIR/$DATE
-		fi
-	done
+  for DATE in $BACKUP_DATES ; do
+    if [ $(( $DATE - $DAYSAGO )) -lt 0 ] ; then
+      rm -rf $BACKUP_DIR/$DATE
+    fi
+  done
 fi
