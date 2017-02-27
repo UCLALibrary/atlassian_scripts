@@ -126,7 +126,7 @@ read
 /usr/local/bin/atlassian/atlassian_drop_db_tables $DBNAME
 
 # Restore the MySQL dump file to the $APP database
-echo -e "\nRestoring $SQLDUMP_FILE to the $APP database"
+echo -e "\nRestoring $SQLDUMP_FILE to the $DBNAME database"
 echo -e "This can be a lengthy process - please be patient \n"
 mysql $DBNAME < $SQLDUMP_FILE
 if [ $? -ne 0 ] ; then
