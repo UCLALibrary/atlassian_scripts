@@ -187,6 +187,10 @@ read
 echo -e "\nRestoring $SQLDUMP_FILE to the $DBNAME database"
 echo -e "This can be a lengthy process - please be patient \n"
 mysql -h $DB_HOST -u $DBUSER $DBNAME < $SQLDUMP_FILE
+if [ $? -ne 0 ] ; then
+  echo -e "\nThere was a problem restoring the SQL dump file to the $DBNAME database. \n"
+  exit 1
+fi
 
 if [ "$APP" = "confluence" ] ; then
   echo -e "\nThe $APP Test server is now ready."
