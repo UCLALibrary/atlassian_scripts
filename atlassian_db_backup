@@ -31,7 +31,7 @@ SILENT=0
 APP="null"
 DB_NAME="null"
 
-while getopts ":cjws" OPT ; do
+while getopts ":cjs" OPT ; do
   case $OPT in
     c)
       APP="confluence"

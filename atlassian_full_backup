@@ -28,7 +28,7 @@ TODAY=`date "+%Y%m%d"`
 DAYSAGO=`date -d 'now - 1 days' "+%Y%m%d"`
 APP="null"
 
-while getopts ":cjw" OPT ; do
+while getopts ":cj" OPT ; do
   case $OPT in
     c)
       APP="confluence"

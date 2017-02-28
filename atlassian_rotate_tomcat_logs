@@ -27,7 +27,7 @@ INSTALL_DIR="/usr/local/atlassian"
 SAVETIME=180
 APP="null"
 
-while getopts ":cjw" OPT ; do
+while getopts ":cj" OPT ; do
   case $OPT in
     c)
       APP="confluence"

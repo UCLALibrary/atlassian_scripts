@@ -20,7 +20,7 @@ HOME_DIR="/var/atlassian/application-data"
 BIN_DIR="null"
 APP="null"
 
-while getopts ":cjw" OPT ; do
+while getopts ":cj" OPT ; do
   case $OPT in
     c)
       APP="confluence"

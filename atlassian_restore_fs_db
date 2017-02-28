@@ -26,7 +26,7 @@ USAGE() {
   echo -e "-h PATH-TO-HOMEDIR-TAR    --> Location of the Home directory archive \n"
 }
 
-while getopts ":cjws:i:h:" OPT ; do
+while getopts ":cjs:i:h:" OPT ; do
   case $OPT in
     c)
       APP="confluence"
