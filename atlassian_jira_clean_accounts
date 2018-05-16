@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# This script cleans out JIRA user accounts by looking up a query string
+# in the database, finding all accounts related to that string
+
+# It then uses JIRA's REST API to perform the account removal
+
+# To use the REST API, the script connects to the
+# local JIRA instance as an admin-level user that has permission 
+# to perform account deletions
+
+# Must be root to run this script
+if [ "`/usr/bin/id -urn`" != "root" ] ; then
+  echo -e "\nYou must be root to execute this script \n"
+  exit 1
+fi
+
+JIRAHOME="/var/atlassian/application-data/jira"
+JIRAUSERENV=".jirauserenv"
+JIRAHOSTNAME=`hostname`
+USERQUERY=$1
+
+if [ -f ${JIRAHOME}/${JIRAUSERENV} ] ; then
+  . ${JIRAHOME}/${JIRAUSERENV}
+else 
+  echo "Could not find JIRA user env file"
+  echo "No user information available to connect to JIRA instance"
+  exit 1
+fi
+
+if [ "${JIRAHOSTNAME}" == "t-w-jira01" ] ; then
+  JIRA_URL="https://jira-test.library.ucla.edu"
+elif [ "${JIRAHOSTNAME}" == "p-w-jira01" ] ; then
+  JIRA_URL="https://jira.library.ucla.edu"
+else
+  echo "Could not determine JIRA URL based on system hostname"
+  exit 1
+fi
+
+if [ "${USERQUERY}" == "" ] ; then
+  echo "Usage: `basename $0` [USER-SEARCH-PARAMTER]"
+  echo "Example: `basename $0` .ru"
+  exit 1
+fi
+
+USERS_LIST=$(mysql -e "SELECT user_name FROM cwd_user WHERE email_address like \"%${USERQUERY}\"" | awk '{ print $1 }' | grep -v "^user_name")
+
+if [ "${USERS_LIST}" == "" ] ; then
+  echo -e "There was a problem accessing the database or no users were found"
+  exit 1
+fi
+
+for USER in ${USERS_LIST} ; do
+  echo "Delete the ${USER} account from JIRA? (1 for Yes / 2 for No)"
+  select CHOICE in "Yes" "No"; do
+    case "${CHOICE}" in
+      Yes ) curl --request DELETE --user "${JIRA_USER}:${JIRA_PASSWD}" --header "Accept: application/json" --url "${JIRA_URL}/rest/api/2/user?username=${USER}"
+            echo "Username ${USER} removed"
+            break
+            ;;
+      No ) echo "Username ${USER} preserved"
+           break
+           ;;
+    esac
+  done
+done
