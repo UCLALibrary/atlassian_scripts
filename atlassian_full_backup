@@ -86,7 +86,7 @@ mv ${BACKUP_DIR}/${APP}_*_${TODAY_}* ${DAILY_BACKUP_DIR}
 # Rotate Backup Files - Keep Files for ${DAYSAGO}
 # -------------------------------------------------------------
 
-BACKUP_DATES=`find ${BACKUP_DIR} -type d -name "[0-9]*" -printf "%f\n" | sort -n`
+BACKUP_DATES=`find ${BACKUP_DIR}/${APP} -type d -name "[0-9]*" -printf "%f\n" | sort -n`
 
 # Each backup directory is named in YYYYMMDD format based on the day it was created.
 # If a directory's name is older than $DAYSAGO, the directory is removed.
