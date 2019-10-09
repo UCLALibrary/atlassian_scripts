@@ -22,14 +22,15 @@ USAGE() {
 
 BACKUP_DIR="/atlassianbackup"
 SCRIPT_DIR="/usr/local/bin/atlassian"
-FS_BACKUP="$SCRIPT_DIR/atlassian_fs_backup"
-DB_BACKUP="$SCRIPT_DIR/atlassian_db_backup"
+FS_BACKUP="${SCRIPT_DIR}/atlassian_fs_backup"
+DB_BACKUP="${SCRIPT_DIR}/atlassian_db_backup"
 TODAY=`date "+%Y%m%d"`
 DAYSAGO=`date -d 'now - 1 days' "+%Y%m%d"`
 APP="null"
+DAILY_BACKUP_DIR="${BACKUP_DIR}/${APP}/${TODAY}"
 
 while getopts ":cj" OPT ; do
-  case $OPT in
+  case ${OPT} in
     c)
       APP="confluence"
       FS_OPTIONS="-c"
@@ -41,19 +42,19 @@ while getopts ":cj" OPT ; do
       DB_OPTIONS="-j -s"
       ;;
     \?)
-      echo -e "\nInvalid option: -$OPTARG" >&2
+      echo -e "\nInvalid option: -${OPTARG}" >&2
       USAGE
       exit 1
       ;;
     :)
-      echo -e "\nOption -$OPTARG requires an argument" >&2
+      echo -e "\nOption -${OPTARG} requires an argument" >&2
       USAGE
       exit 1
       ;;
   esac
 done
 
-if [ "$APP" == "null" ] ; then
+if [ "${APP}" == "null" ] ; then
   USAGE
   exit 1
 fi
@@ -62,36 +63,36 @@ fi
 # Execute Full Backup
 # -------------------------------------------------------------
 
-mkdir -p $BACKUP_DIR/$TODAY
+mkdir -p ${DAILY_BACKUP_DIR}
 
-echo -e "\nPerforming $APP filesystem backup..."
-$FS_BACKUP $FS_OPTIONS
+echo -e "\nPerforming ${APP} filesystem backup..."
+${FS_BACKUP} ${FS_OPTIONS}
 if [ $? -ne 0 ] ; then
-  echo -e "Error performing $APP filesystem backup! Exiting from backup process.\n"
+  echo -e "Error performing ${APP} filesystem backup! Exiting from backup process.\n"
   exit 1
 fi
 
-echo -e "\nPerforming $APP database backup..."
-$DB_BACKUP $DB_OPTIONS
+echo -e "\nPerforming ${APP} database backup..."
+${DB_BACKUP} ${DB_OPTIONS}
 if [ $? -ne 0 ] ; then
-  echo -e "Error performing $APP database backup! Exiting from backup process.\n"
+  echo -e "Error performing ${APP} database backup! Exiting from backup process.\n"
   exit 1
 fi
 
-mv $BACKUP_DIR/${APP}_*_$TODAY_* $BACKUP_DIR/$TODAY
+mv ${BACKUP_DIR}/${APP}_*_${TODAY_}* ${DAILY_BACKUP_DIR}
 
 # -------------------------------------------------------------
-# Rotate Backup Files - Keep Files for $DAYSAGO
+# Rotate Backup Files - Keep Files for ${DAYSAGO}
 # -------------------------------------------------------------
 
-BACKUP_DATES=`find $BACKUP_DIR -type d -name "[0-9]*" -printf "%f\n" | sort -n`
+BACKUP_DATES=`find ${BACKUP_DIR} -type d -name "[0-9]*" -printf "%f\n" | sort -n`
 
 # Each backup directory is named in YYYYMMDD format based on the day it was created.
 # If a directory's name is older than $DAYSAGO, the directory is removed.
-if [ -n "$BACKUP_DATES" ] ; then
-  for DATE in $BACKUP_DATES ; do
-    if [ $(( $DATE - $DAYSAGO )) -lt 0 ] ; then
-      rm -rf $BACKUP_DIR/$DATE
+if [ -n "${BACKUP_DATES}" ] ; then
+  for DATE in ${BACKUP_DATES} ; do
+    if [ $(( ${DATE} - ${DAYSAGO} )) -lt 0 ] ; then
+      rm -rf ${BACKUP_DIR}/${APP}/${DATE}
     fi
   done
 fi
