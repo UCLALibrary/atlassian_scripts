@@ -27,7 +27,6 @@ DB_BACKUP="${SCRIPT_DIR}/atlassian_db_backup"
 TODAY=`date "+%Y%m%d"`
 DAYSAGO=`date -d 'now - 1 days' "+%Y%m%d"`
 APP="null"
-DAILY_BACKUP_DIR="${BACKUP_DIR}/${APP}/${TODAY}"
 
 while getopts ":cj" OPT ; do
   case ${OPT} in
@@ -58,6 +57,8 @@ if [ "${APP}" == "null" ] ; then
   USAGE
   exit 1
 fi
+
+DAILY_BACKUP_DIR="${BACKUP_DIR}/${APP}/${TODAY}"
 
 # -------------------------------------------------------------
 # Execute Full Backup
