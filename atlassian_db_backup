@@ -107,7 +107,7 @@ fi
 # See https://docs.library.ucla.edu/x/GoA4Bw for details regarding the mysqldump options
 echo -e "Starting back-up of the $DB_NAME database"
 echo -e "For a large database this can be a lenghtly process"
-mysqldump --opt --max_allowed_packet=64MB $DB_NAME > $BACKUP_DIR/$BACKUP_FILE
+mysqldump $DB_NAME > $BACKUP_DIR/$BACKUP_FILE
 if [ $? -ne 0 ] ; then
   echo "mysqldump encountered an error and the back-up failed."
   if [ -f $BACKUP_DIR/$BACKUP_FILE ]; then
